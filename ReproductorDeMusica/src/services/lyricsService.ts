@@ -1,32 +1,22 @@
 import axios from "axios";
-import { GeniusAPIResponse, GeniusSong } from "../types"; // 🔹 Importamos los tipos
 
-const GENIUS_API_KEY = "j6qUSXSrNz9y5p6xHtGiW5thihCf9Z7TnuZgewrVPcNFa8axRtJR70aI_80uD2i6"; // 🔴 Reemplázalo con tu clave real
-const BASE_URL = "https://api.genius.com";
+export interface LyricsAPIResponse {
+  lyrics: string;
+}
 
-/**
- * Busca una canción en Genius y obtiene la URL de la letra.
- */
-export async function searchLyrics(songTitle: string, artistName: string): Promise<GeniusSong | null> {
+export async function searchLyrics(songTitle: string, artistName: string): Promise<LyricsAPIResponse | null> {
   try {
-    const response = await axios.get<GeniusAPIResponse>(`${BASE_URL}/search`, {
-      headers: { Authorization: `Bearer ${GENIUS_API_KEY}` },
-      params: { q: `${songTitle} ${artistName}` },
-    });
+    // 🔹 Eliminar contenido dentro de paréntesis y caracteres extraños
+    const formattedTitle = songTitle.replace(/\(.*?\)|\[.*?\]|[^a-zA-Z0-9\s]/g, "").trim();
+    const formattedArtist = artistName.replace(/[^a-zA-Z0-9\s]/g, "").trim();
 
-    // Verificamos si hay resultados
-    if (!response.data.response.hits.length) return null;
+    const url = `https://api.lyrics.ovh/v1/${encodeURIComponent(formattedArtist)}/${encodeURIComponent(formattedTitle)}`;
+    console.log("🔍 Buscando en:", url);
 
-    // Extraemos la información de la primera coincidencia
-    const songData = response.data.response.hits[0].result;
-
-    return {
-      title: songData.full_title,
-      artist: songData.primary_artist.name,
-      lyricsUrl: songData.url,
-    };
+    const response = await axios.get<LyricsAPIResponse>(url);
+    return response.data;
   } catch (error) {
-    console.error("Error al buscar la letra en Genius:", error);
+    console.error("❌ Error al buscar la letra:", error);
     return null;
   }
 }

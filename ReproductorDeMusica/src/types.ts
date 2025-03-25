@@ -15,11 +15,6 @@ export interface YouTubeVideo {
       };
     }[];
   }
-  export interface GeniusSong {
-    title: string;
-    artist: string;
-    lyricsUrl: string;
-  }
   
   export interface GeniusAPIResponse {
     response: {
@@ -32,3 +27,15 @@ export interface YouTubeVideo {
       }[];
     };
   }
+  export interface GeniusSong {
+    title: string;
+    artist: string;
+    lyricsUrl?: string; 
+    lyrics?: string; // Para almacenar letras de Lyrics.ovh
+  }
+  
+  // Nueva interfaz para Lyrics.ovh
+  export interface LyricsAPIResponse {
+    lyrics: string;
+  }
+  
