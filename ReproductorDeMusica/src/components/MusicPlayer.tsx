@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import ReactPlayer from "react-player/youtube";
 import { searchLyrics } from "../services/lyricsService";
-import { DoublyLinkedList } from "../utils/DoublyLinkedList";
 
 interface MusicPlayerProps {
   currentSong: { id: string; title: string; artist: string } | null;
@@ -12,13 +11,11 @@ interface MusicPlayerProps {
 export default function MusicPlayer({ currentSong, nextSong, prevSong }: MusicPlayerProps) {
   const [lyricsUrl, setLyricsUrl] = useState<string | null>(null);
   const [loadingLyrics, setLoadingLyrics] = useState<boolean>(false);
-  const [playlist, setPlaylist] = useState<DoublyLinkedList<{ id: string; title: string; artist: string }>>(new DoublyLinkedList());
+  const [playlist, setPlaylist] = useState<{ id: string; title: string; artist: string }[]>([]);
 
-  // Asegurarse de que la canción actual se agrega a la lista cuando cambia
   useEffect(() => {
-    if (currentSong && !playlist.getCurrent()) {
-      playlist.add(currentSong);  // Usamos la función de la lista doblemente enlazada
-      setPlaylist(new DoublyLinkedList()); // Creamos una nueva instancia de DoublyLinkedList para actualizar el estado
+    if (currentSong && !playlist.some(song => song.id === currentSong.id)) {
+      setPlaylist(prevPlaylist => [...prevPlaylist, currentSong]);
     }
   }, [currentSong]);
 
@@ -42,28 +39,9 @@ export default function MusicPlayer({ currentSong, nextSong, prevSong }: MusicPl
     }
   };
 
-  // Función para eliminar una canción de la lista
+  // Function to remove a song from the playlist
   const removeSong = (songId: string) => {
-    playlist.remove({ id: songId, title: "", artist: "" }); // Utilizamos la función remove de DoublyLinkedList
-    setPlaylist(new DoublyLinkedList()); // Actualizamos el estado para desencadenar el re-renderizado
-  };
-
-  // Navegar a la siguiente canción
-  const next = () => {
-    playlist.next();  // Usamos la lógica de la lista doblemente enlazada
-    const current = playlist.getCurrent();
-    if (current) {
-      nextSong();  // Llamamos la función de la canción siguiente
-    }
-  };
-
-  // Navegar a la canción anterior
-  const prev = () => {
-    playlist.prev();  // Usamos la lógica de la lista doblemente enlazada
-    const current = playlist.getCurrent();
-    if (current) {
-      prevSong();  // Llamamos la función de la canción anterior
-    }
+    setPlaylist(prevPlaylist => prevPlaylist.filter(song => song.id !== songId));
   };
 
   return (
@@ -91,13 +69,13 @@ export default function MusicPlayer({ currentSong, nextSong, prevSong }: MusicPl
       <div className="mt-6 flex justify-center gap-4">
         <button
           className="px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition"
-          onClick={prev}
+          onClick={prevSong}
         >
           ⏮️ Anterior
         </button>
         <button
           className="px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition"
-          onClick={next}
+          onClick={nextSong}
         >
           ⏭️ Siguiente
         </button>
@@ -117,21 +95,21 @@ export default function MusicPlayer({ currentSong, nextSong, prevSong }: MusicPl
         </div>
       )}
 
-      {/* Mostrar lista de canciones */}
-      {playlist.getCurrent() && (
+      {playlist.length > 0 && (
         <div className="mt-6 p-4 bg-gray-200 rounded-lg shadow">
           <h3 className="text-lg font-semibold text-gray-800">📜 Lista de Canciones:</h3>
           <ul className="mt-2 space-y-2">
-            {/* Mostrar canciones de la lista */}
-            <li className="p-2 bg-white shadow rounded-lg flex justify-between items-center">
-              <span className="text-gray-700">{currentSong?.title} - {currentSong?.artist}</span>
-              <button
-                onClick={() => removeSong(currentSong?.id!)} // Llamamos a removeSong con el ID de la canción
-                className="ml-4 px-3 py-1 text-sm bg-red-600 text-white rounded-full hover:bg-red-700 transition"
-              >
-                Eliminar
-              </button>
-            </li>
+            {playlist.map((song, index) => (
+              <li key={song.id} className="p-2 bg-white shadow rounded-lg flex justify-between items-center">
+                <span className="text-gray-700">{index + 1}. {song.title} - {song.artist}</span>
+                <button
+                  onClick={() => removeSong(song.id)}
+                  className="ml-4 px-3 py-1 text-sm bg-red-600 text-white rounded-full hover:bg-red-700 transition"
+                >
+                  Eliminar
+                </button>
+              </li>
+            ))}
           </ul>
         </div>
       )}
